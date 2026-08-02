@@ -19,6 +19,9 @@ export function Header() {
           <Link href="/leaderboard" className="text-bp-fg/80 hover:text-bp-accent">
             Leaderboard
           </Link>
+          <Link href="/profile" className="text-bp-fg/80 hover:text-bp-accent">
+            Profile concept
+          </Link>
           <a
             href="https://basepaint.xyz"
             target="_blank"

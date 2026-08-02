@@ -1,12 +1,33 @@
 # Streak Shield
 
+**Category: For Artists** — BasePaint Hackathon, Aug 1–8 2026.
+
 A capped, slow-refilling "shield" mechanic layered on top of [BasePaint](https://basepaint.xyz) painting
 streaks — forgives an occasional missed day without letting anyone buy their way out of actually
-showing up. Built for the BasePaint AI Hackathon.
+showing up.
+
+Streaks are the thing that gets artists back to the canvas every day, and right now a single
+missed day erases months of showing up. That's a tool problem, not a discipline problem: the
+mechanic punishes the exact people it's meant to keep painting. Streak Shield is the smallest
+change that fixes it without turning the streak into something you can buy.
 
 This is a **derivative app**, not a change to BasePaint itself: it reads BasePaint's public
 indexer and calls BasePaint's own `mint()` function directly. It never touches pixel allocation,
 mint pricing, or artist payouts, and it never holds a treasury.
+
+## Two ways to see it
+
+| Route | What it is |
+| --- | --- |
+| `/` | The working app — connect a wallet, see your real shielded streak, buy protection |
+| `/leaderboard` | Public streak leaderboard (BasePaint has none today) |
+| `/profile` | **The pitch**: what this looks like shipped *natively inside a BasePaint profile page*, rather than as a separate app |
+
+`/profile` recreates a real BasePaint profile (`basepaint.xyz/@joec.base.eth`) using the official
+brand palette and typeface, with the Streak Shield card sitting directly under the stats grid next
+to **Longest Streak** — where it would actually live. The surrounding profile chrome is a static
+recreation for the pitch; the Streak Shield card itself runs the real engine (`lib/streak.ts`),
+so what you see there is the same simulation the dashboard uses, not a mock.
 
 ## Run it
 
@@ -70,8 +91,12 @@ is down to 1 or 0 shields. Honest limitation: it only reaches people who open th
 ## File map
 
 ```
-app/page.tsx                  dashboard: streak, shields, banner, buy button, shield history
-app/leaderboard/page.tsx       public leaderboard sorted by raw streak
+app/(dashboard)/page.tsx             dashboard: streak, shields, banner, buy button, shield history
+app/(dashboard)/leaderboard/page.tsx public leaderboard sorted by raw streak
+app/(dashboard)/layout.tsx           Streak Shield's own header/footer shell
+app/profile/page.tsx                 concept: Streak Shield native to a BasePaint profile page
+components/ProfileStreakShieldCard.tsx  the profile-native shield card (real engine, not a mock)
+components/SocialIcons.tsx           inline X / Farcaster marks
 lib/basepaint.ts               day math, BasePaint contract address/ABI, mint-day helper
 lib/graphql.ts                 queries against graphql.basepaint.xyz (Account, Contribution)
 lib/streak.ts                  the forward-replay streak/shield simulation engine
@@ -94,8 +119,8 @@ active player already has.
 
 ## Judging criteria
 
-- **Usefulness** — solves a real retention problem (miss a day, feel like you've "lost," stop
-  coming back) without touching BasePaint's core economics.
+- **Usefulness** — solves a real retention problem for artists (miss a day, feel like you've
+  "lost," stop coming back) without touching BasePaint's core economics.
 - **Craft** — the capped-cap + capped-purchase-rate combination is a tuned balance, not just
   "streak freeze but smaller"; `lib/streak.ts` implements it as one deterministic simulation
   rather than bolted-on special cases.
@@ -104,7 +129,8 @@ active player already has.
   bolted-on treasury or token.
 - **Staying power** — free milestone earning plus a paid option priced identically to a mint gives
   both non-payers and casual payers a reason to keep a streak alive; the low-shield banner nudges
-  action before a streak actually breaks.
+  action before a streak actually breaks. `/profile` shows the end state: a mechanic small enough
+  to drop into BasePaint's existing profile page rather than a separate destination to remember.
 
 ## Known limitations (honest, not hidden)
 
@@ -114,3 +140,15 @@ active player already has.
 - No push/social notification — only reaches people who open the app.
 - Leaderboard ranks BasePaint's raw streak, not the shielded one, since shield state isn't shared
   infrastructure yet.
+- `/profile` is a concept mockup, not a fork of basepaint.xyz — the profile chrome around the
+  Streak Shield card is static, and the numbers in the stats grid are copied from a real profile
+  rather than fetched. The BasePaint logo is loaded from BasePaint's own brand page; drop it into
+  `public/` to make the repo fully self-contained.
+- With no wallet connected, `/profile` shows clearly-labeled preview numbers so the page reads as
+  complete in screenshots; connect a wallet and it switches to real indexer data.
+
+## Credits
+
+BasePaint artwork is CC0. Logo and brand palette per [basepaint.xyz/brand](https://basepaint.xyz/brand);
+MEK Sans / MEK Mono are BasePaint's display faces and are **not** redistributed here — the app
+falls back to Roboto Mono, BasePaint's UI typeface. Unofficial and unaffiliated.
