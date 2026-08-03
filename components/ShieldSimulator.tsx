@@ -16,7 +16,7 @@ export function ShieldSimulator({ streakState }: { streakState: StreakState }) {
   const notable = streakState.timeline.filter((e) => e.kind !== "painted").slice(-12).reverse();
 
   return (
-    <div className="pixel-corners border-2 border-bp-fg/15 bg-white/[0.02] p-6">
+    <div className="rounded-lg border-2 border-bp-fg/15 bg-white/[0.02] p-6">
       <h2 className="mb-1 font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
         Shield history
       </h2>

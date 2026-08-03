@@ -53,7 +53,7 @@ export function ProfileStreakShieldCard() {
   const saved = streak - raw;
 
   return (
-    <div className="pixel-corners border-2 border-bp-accent/30 bg-bp-card p-6">
+    <div className="rounded-lg border-2 border-bp-accent/30 bg-bp-card p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
           Streak Shield

@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
       )}
 
       {!isLoading && (data?.length ?? 0) > 0 && (
-        <ol className="pixel-corners divide-y divide-bp-fg/10 border-2 border-bp-fg/15 bg-white/[0.02]">
+        <ol className="rounded-lg divide-y divide-bp-fg/10 border-2 border-bp-fg/15 bg-white/[0.02]">
           {data!.map((entry, i) => {
             const isYou = address && entry.id.toLowerCase() === address.toLowerCase();
             return (

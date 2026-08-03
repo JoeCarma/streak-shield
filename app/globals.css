@@ -11,12 +11,10 @@
   }
 }
 
-@layer utilities {
-  .pixel-corners {
-    clip-path: polygon(
-      0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
-      100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
-      4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
-    );
-  }
-}
+/*
+ * Note: an earlier `.pixel-corners` utility clipped card corners with a
+ * clip-path to fake a pixel-art bevel. It was removed because the clip cut
+ * through the card's own border, leaving the corners visibly open — BasePaint's
+ * real cards use plain closed borders with a small radius, so that's what the
+ * app uses now (`rounded-lg border-2`).
+ */

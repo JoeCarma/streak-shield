@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ProfileStreakShieldCard } from "@/components/ProfileStreakShieldCard";
-import { XIcon, FarcasterIcon, GlobeIcon } from "@/components/SocialIcons";
+import { XIcon, FarcasterIcon, InstagramIcon } from "@/components/SocialIcons";
 import { basepaintArtUrl } from "@/lib/basepaint";
 
 export const metadata: Metadata = {
@@ -10,32 +10,69 @@ export const metadata: Metadata = {
     "Mockup of what Streak Shield would look like built natively into a BasePaint profile page, instead of living in a separate app.",
 };
 
-const STATS: [string, string, boolean][] = [
-  ["106.723", "Pixels Painted", false],
-  ["276", "Canvases Painted", false],
-  ["11", "Canvases Collected", false],
-  ["130", "Longest Streak", true],
-  ["106", "Days Voted", false],
-  ["38", "Themes Proposed", false],
+const STATS: [string, string][] = [
+  ["107.058", "Pixels Painted"],
+  ["277", "Canvases Painted"],
+  ["12", "Canvases Collected"],
+  ["130", "Longest Streak"],
+  ["107", "Days Voted"],
+  ["38", "Themes Proposed"],
 ];
 
 const COLLECTION: [string, number][] = [
   ["Brushes", 1],
-  ["Artworks", 11],
+  ["Artworks", 12],
   ["Works In Progress", 2],
   ["Future Art", 0],
   ["Animations", 0],
+  ["Masterpieces", 2],
+  ["Cursors", 0],
+];
+
+const CONTRIBUTIONS: [string, number][] = [
+  ["Pixels", 277],
+  ["Earnings", 0],
+  ["Themes", 38],
 ];
 
 const NAV_TABS = ["PAINT", "MINT", "VIEW", "VOTE", "HACK", "···"];
 
-/**
- * Real CC0 BasePaint canvases used instead of placeholder gradients — all
- * BasePaint artwork is public domain, so these can be used freely. See
+/** Starred canvases, matching the real profile. Art is CC0. */
+const FAVORITE_CANVASES: { day: number; title: string }[] = [
+  { day: 851, title: "The Monster Skewers" },
+  { day: 952, title: "Japanese Gachapon" },
+  { day: 805, title: "Japan Megamania" },
+  { day: 187, title: "Manga" },
+  { day: 980, title: "The ape, the bull and the ugly." },
+];
+
+type ActivityEntry =
+  | { kind: "painted"; pixels: number; day: number; when: string }
+  | { kind: "voted"; day: number; when: string }
+  | { kind: "earned"; eth: string; day: number; when: string };
+
+/** Recent activity, mirroring the real profile's feed. */
+const ACTIVITY: ActivityEntry[] = [
+  { kind: "painted", pixels: 140, day: 1089, when: "15 hours ago" },
+  { kind: "painted", pixels: 243, day: 1089, when: "15 hours ago" },
+  { kind: "painted", pixels: 91, day: 1089, when: "22 hours ago" },
+  { kind: "painted", pixels: 282, day: 1089, when: "22 hours ago" },
+  { kind: "painted", pixels: 73, day: 1089, when: "yesterday" },
+  { kind: "painted", pixels: 29, day: 1089, when: "yesterday" },
+  { kind: "painted", pixels: 29, day: 1089, when: "yesterday" },
+  { kind: "voted", day: 1090, when: "yesterday" },
+  { kind: "earned", eth: "0.00106", day: 1086, when: "yesterday" },
+  { kind: "earned", eth: "0.00097", day: 1087, when: "yesterday" },
+];
+
+const HANDLE = "joec.base.eth";
+
+/*
+ * The avatar (public/avatar.png) and the brush NFT shown beside the About text
+ * (public/brush.png) are the account's real assets. Favourite-canvas thumbnails
+ * come straight from BasePaint's CC0 art endpoint — see
  * lib/basepaint.ts#basepaintArtUrl.
  */
-const AVATAR_CANVAS_DAY = 1042;
-const FEATURED_CANVAS_DAY = 1077;
 
 /**
  * V2 concept: instead of Streak Shield living in its own dashboard app, this
@@ -51,62 +88,82 @@ const FEATURED_CANVAS_DAY = 1077;
 export default function ProfileConceptPage() {
   return (
     <div className="min-h-screen bg-bp-surface font-mono text-bp-fg">
-      {/* Top nav — mimics basepaint.xyz's own header, not Streak Shield's */}
-      <div className="border-b-2 border-black/40 bg-bp-blue">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-2">
+      {/*
+        Top nav — a recreation of basepaint.xyz's own header (not Streak
+        Shield's). Structurally it's two black-outlined clusters floating on the
+        BasePaint Blue bar: the logo + section tabs on the left, and the
+        counters + wallet chip on the right. The chunky black outlines and the
+        darker-blue-on-lighter-blue label treatment are what give it its look,
+        so they're matched rather than approximated with generic borders.
+      */}
+      <div className="bg-[#073EB1] bg-[radial-gradient(130%_200%_at_22%_0%,#1450D8_0%,#0A42BC_40%,#062F8C_100%)]">
+        {/* The nav bar runs edge-to-edge on the live site — only the page
+            content below it is width-constrained. */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          {/*
+            Left cluster: logo tile + section tabs. The buttons carry no border
+            of their own — the black shell showing through the gaps is what
+            draws the outlines, which is how the live site does it. Button
+            styling below mirrors basepaint.xyz's own markup: bg #014BE5,
+            white uppercase Viga at text-sm, rounded-md, py-2 px-4.
+          */}
+          <div className="flex items-center gap-[5px] rounded-lg bg-black p-[5px]">
             {/*
-              Official BasePaint mark, served from BasePaint's own brand page.
-              To make the repo fully self-contained, download it to
-              public/basepaint-logo-white.svg and swap this src for
-              "/basepaint-logo-white.svg" — the brand guidelines ask that the
-              mark not be recolored or recreated in another typeface, so it's
-              used as-is rather than redrawn.
+              White BasePaint mark on the same blue as the tabs, used as-is per
+              the brand guidelines (no recoloring, no redrawing). Served from
+              public/ so the repo stays self-contained.
             */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://basepaint.xyz/brand/basepaint-logo-white.svg"
-              alt="BasePaint"
-              className="h-7 w-auto pr-2"
-            />
-            <nav className="flex flex-wrap items-center gap-1.5 text-xs font-bold sm:text-sm">
+            <span className="flex items-center rounded-md bg-[#014BE5] px-5 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/basepaint-logo-white.svg"
+                alt="BasePaint"
+                className="h-[22px] w-auto"
+              />
+            </span>
+
+            <nav className="flex items-center gap-[5px] font-viga text-sm uppercase">
               {NAV_TABS.map((label) => (
-                <span
+                <button
                   key={label}
-                  className="rounded border-2 border-black/25 bg-white/15 px-3 py-1.5"
+                  type="button"
+                  className="flex items-center justify-center rounded-md bg-[#014BE5] px-4 py-2 text-center text-[#0B3BB0] transition-colors hover:text-white active:pb-1.5 active:pt-2.5"
                 >
                   {label}
-                </span>
+                </button>
               ))}
             </nav>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-            <span className="rounded border-2 border-black/25 bg-black/25 px-2.5 py-1.5">
-              💧 0013
-            </span>
-            <span className="rounded border-2 border-black/25 bg-black/25 px-2.5 py-1.5">
-              🔥 01
-            </span>
-            <span className="rounded border-2 border-black/25 bg-black/25 px-2.5 py-1.5">
-              💎 000000
-            </span>
-            <span className="rounded border-2 border-black/25 bg-bp-accent px-2.5 py-1.5 text-bp-ink">
+
+          {/* Right cluster: counters + wallet, one black pill */}
+          <div className="flex items-center gap-4 rounded-lg bg-black px-4 py-3 text-sm font-bold text-bp-accent">
+            <span className="whitespace-nowrap">💧 0013</span>
+            <span className="whitespace-nowrap">🔥 01</span>
+            <span className="whitespace-nowrap">💎 000000</span>
+            <span className="flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-block h-3 w-4 rounded-[2px] bg-bp-accent" />
               joec.base.eth
             </span>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-8 lg:grid-cols-[300px_1fr]">
+      {/*
+        Content is width-capped and centred, unlike the nav. Measured against
+        the live profile: the content column sits at roughly 80% of a wide
+        viewport with generous side margins — that breathing room is a big part
+        of why the real page doesn't feel cramped.
+      */}
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-6 px-4 py-8 lg:grid-cols-[270px_1fr]">
         {/* Sidebar */}
         <aside className="space-y-4">
-          <div className="pixel-corners border-2 border-bp-fg/15 bg-bp-card p-5">
+          <div className="rounded-lg border-2 border-bp-fg/15 bg-bp-card p-5">
             <div className="mb-4 flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={basepaintArtUrl(AVATAR_CANVAS_DAY)}
-                alt={`BasePaint canvas #${AVATAR_CANVAS_DAY}`}
-                className="h-14 w-14 shrink-0 rounded object-cover [image-rendering:pixelated]"
+                src="/avatar.png"
+                alt="joec.base.eth"
+                className="h-14 w-14 shrink-0 rounded-lg [image-rendering:pixelated]"
               />
               <div>
                 <p className="font-sans text-lg font-bold">joec.base.eth</p>
@@ -114,12 +171,14 @@ export default function ProfileConceptPage() {
               </div>
             </div>
 
-            <p className="mb-1 text-xs uppercase tracking-widest text-bp-fg/50">Current balance</p>
+            <p className="mb-2 text-sm text-bp-fg/50">Current balance</p>
             <p className="font-sans text-lg font-bold">
-              0,02639 ETH <span className="text-bp-fg/40">+</span>
+              0,02379 ETH <span className="text-bp-fg/40">+</span>
             </p>
-            <p className="text-sm text-bp-fg/70 underline decoration-dotted">0,00001 WETH</p>
-            <p className="mb-4 text-xs text-bp-fg/40">≈ 48,97 US$ USD</p>
+            <p className="font-sans text-lg font-bold underline decoration-bp-fg/40 decoration-dotted underline-offset-4">
+              0,00001 WETH
+            </p>
+            <p className="mb-4 mt-1 text-xs text-indigo-300/70">≈ 44,31 US$ USD</p>
 
             <div className="space-y-2">
               <button className="w-full rounded border-2 border-bp-fg/20 py-2 text-sm font-bold hover:border-bp-accent hover:text-bp-accent">
@@ -131,14 +190,30 @@ export default function ProfileConceptPage() {
             </div>
           </div>
 
-          <div className="pixel-corners border-2 border-bp-fg/15 bg-bp-card p-2">
+          <div className="rounded-lg border-2 border-bp-fg/15 bg-bp-card p-2">
             <p className="rounded bg-white/5 px-3 py-2 text-sm font-bold">Overview</p>
+
             <p className="mt-3 px-3 text-xs uppercase tracking-widest text-bp-fg/40">Collection</p>
             <ul className="mt-1 text-sm">
               {COLLECTION.map(([label, count]) => (
                 <li
                   key={label}
-                  className="flex items-center justify-between px-3 py-2 text-bp-fg/80"
+                  className="flex cursor-pointer items-center justify-between rounded px-3 py-2 text-bp-fg/80 hover:bg-white/5 hover:text-bp-fg"
+                >
+                  <span>{label}</span>
+                  <span className="text-bp-fg/40">{count}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-3 px-3 text-xs uppercase tracking-widest text-bp-fg/40">
+              Contributions
+            </p>
+            <ul className="mt-1 text-sm">
+              {CONTRIBUTIONS.map(([label, count]) => (
+                <li
+                  key={label}
+                  className="flex cursor-pointer items-center justify-between rounded px-3 py-2 text-bp-fg/80 hover:bg-white/5 hover:text-bp-fg"
                 >
                   <span>{label}</span>
                   <span className="text-bp-fg/40">{count}</span>
@@ -151,7 +226,7 @@ export default function ProfileConceptPage() {
         {/* Main column */}
         <div className="space-y-6">
           {/* About */}
-          <div className="pixel-corners flex items-start justify-between gap-6 border-2 border-bp-fg/15 bg-bp-card p-6">
+          <div className="rounded-lg flex items-start justify-between gap-6 border-2 border-bp-fg/15 bg-bp-card p-6">
             <div>
               <h1 className="mb-3 font-sans text-lg font-bold">About</h1>
               <p className="max-w-xl text-sm leading-relaxed text-bp-fg/80">
@@ -160,29 +235,30 @@ export default function ProfileConceptPage() {
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-bp-fg/50">
                 <XIcon />
+                <InstagramIcon />
                 <FarcasterIcon />
-                <GlobeIcon />
                 <span>Joined Aug 27, 2025</span>
                 <span>·</span>
                 <span>
-                  From <span className="text-bp-accent">AR</span> Argentina
+                  From <span className="text-[10px] text-bp-fg/70">AR</span> Argentina
                 </span>
                 <span>·</span>
                 <span className="underline">Edit</span>
               </div>
             </div>
+            {/* The account's brush NFT, as shown on the real profile. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={basepaintArtUrl(FEATURED_CANVAS_DAY)}
-              alt={`BasePaint canvas #${FEATURED_CANVAS_DAY}`}
-              className="hidden h-28 w-28 shrink-0 rounded object-cover [image-rendering:pixelated] sm:block"
+              src="/brush.png"
+              alt="BasePaint brush #3545"
+              className="hidden h-28 w-auto shrink-0 rounded sm:block"
             />
           </div>
 
           {/* Stats grid */}
-          <div className="pixel-corners grid grid-cols-2 divide-x-2 divide-y-2 divide-bp-fg/10 border-2 border-bp-fg/15 bg-bp-card sm:grid-cols-3 sm:divide-y-0">
-            {STATS.map(([value, label, highlight]) => (
-              <div key={label} className={`p-6 ${highlight ? "bg-bp-accent/[0.04]" : ""}`}>
+          <div className="rounded-lg grid grid-cols-2 divide-x-2 divide-y-2 divide-bp-fg/10 border-2 border-bp-fg/15 bg-bp-card sm:grid-cols-3 sm:divide-y-0">
+            {STATS.map(([value, label]) => (
+              <div key={label} className="bg-bp-accent/[0.04] p-6">
                 <p className="font-sans text-3xl font-bold tabular-nums">{value}</p>
                 <p className="mt-1 text-xs uppercase tracking-widest text-bp-fg/50">{label}</p>
               </div>
@@ -193,28 +269,81 @@ export default function ProfileConceptPage() {
           <ProfileStreakShieldCard />
 
           {/* Favorite canvases */}
-          <div className="pixel-corners border-2 border-bp-fg/15 bg-bp-card p-6">
+          <div className="rounded-lg border-2 border-bp-fg/15 bg-bp-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
                 Favorite Canvases
               </h2>
-              <span className="text-xs text-bp-fg/50 underline">Edit</span>
+              <span className="cursor-pointer text-xs text-bp-fg/50 underline hover:text-bp-accent">
+                Edit
+              </span>
             </div>
-            <p className="py-6 text-center text-sm text-bp-fg/40">
-              Star canvases in Artworks to feature them here.
-            </p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {FAVORITE_CANVASES.map(({ day, title }) => (
+                <div key={day} className="group cursor-pointer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={basepaintArtUrl(day)}
+                    alt={`${title} — BasePaint canvas #${day}`}
+                    className="aspect-square w-full rounded border-2 border-bp-fg/10 object-cover [image-rendering:pixelated] group-hover:border-bp-accent/60"
+                  />
+                  <p className="mt-2 text-sm font-bold">Day #{day}</p>
+                  <p className="text-sm leading-snug text-bp-fg/50">{title}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Activity */}
-          <div className="pixel-corners border-2 border-bp-fg/15 bg-bp-card p-6">
-            <h2 className="font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
+          <div className="rounded-lg border-2 border-bp-fg/15 bg-bp-card p-6">
+            <h2 className="mb-2 font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
               Activity
             </h2>
+
+            <ul className="divide-y divide-bp-fg/10 text-sm">
+              {ACTIVITY.map((entry, i) => (
+                <li
+                  key={i}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
+                >
+                  <span className="text-bp-fg/70">
+                    <span className="text-bp-accent">{HANDLE}</span>{" "}
+                    {entry.kind === "painted" && (
+                      <>
+                        painted <span className="text-emerald-400">{entry.pixels} px</span>{" "}
+                        <span className="text-bp-fg/40">on Day #{entry.day}</span>
+                      </>
+                    )}
+                    {entry.kind === "voted" && (
+                      <>
+                        voted <span className="text-bp-fg/40">on Day #{entry.day}</span>
+                      </>
+                    )}
+                    {entry.kind === "earned" && (
+                      <>
+                        earned <span className="text-emerald-400">{entry.eth} ETH</span>{" "}
+                        <span className="text-bp-fg/40">from Day #{entry.day}</span>
+                      </>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-bp-fg/35">{entry.when}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                className="rounded border-2 border-bp-fg/20 px-5 py-2 text-xs font-bold uppercase tracking-widest text-bp-fg/70 hover:border-bp-accent hover:text-bp-accent"
+              >
+                Load more
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <p className="mx-auto max-w-6xl px-4 pb-10 pt-2 text-center text-[11px] text-bp-fg/30">
+      <p className="mx-auto max-w-[1280px] px-4 pb-10 pt-2 text-center text-[11px] text-bp-fg/30">
         Concept mockup recreating basepaint.xyz/@joec.base.eth to pitch Streak Shield as a native
         profile feature — not an official BasePaint page. Canvas art is CC0.{" "}
         <Link href="/" className="underline hover:text-bp-accent">

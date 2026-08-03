@@ -21,7 +21,7 @@ export default function HomePage() {
 
   if (!isConnected) {
     return (
-      <div className="pixel-corners flex flex-col items-center gap-3 border-2 border-bp-fg/15 bg-white/[0.02] px-6 py-16 text-center">
+      <div className="rounded-lg flex flex-col items-center gap-3 border-2 border-bp-fg/15 bg-white/[0.02] px-6 py-16 text-center">
         <span className="text-4xl">🛡️</span>
         <h1 className="font-sans text-xl font-bold">Connect your wallet to see your streak</h1>
         <p className="max-w-sm text-sm text-bp-fg/60">
@@ -42,7 +42,7 @@ export default function HomePage() {
 
       <StreakCard streakState={streakState} rawStreak={rawStreak} />
 
-      <div className="pixel-corners border-2 border-bp-fg/15 bg-white/[0.02] p-6">
+      <div className="rounded-lg border-2 border-bp-fg/15 bg-white/[0.02] p-6">
         <h2 className="mb-3 font-sans text-sm font-bold uppercase tracking-widest text-bp-fg/70">
           Buy Protection
         </h2>

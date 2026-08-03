@@ -12,7 +12,7 @@ export function StreakCard({
   const savedDays = streakState.streak - rawStreak.streak;
 
   return (
-    <div className="pixel-corners border-2 border-bp-fg/15 bg-white/[0.02] p-6">
+    <div className="rounded-lg border-2 border-bp-fg/15 bg-white/[0.02] p-6">
       <div className="flex items-center justify-between gap-6">
         <StreakFlame streak={streakState.streak} />
         <div className="flex flex-col items-end gap-2">

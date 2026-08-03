@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto_Mono } from "next/font/google";
+import { Roboto_Mono, Viga } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -16,6 +16,19 @@ const robotoMono = Roboto_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-roboto-mono",
+});
+
+/**
+ * Viga is the face basepaint.xyz actually uses for its nav buttons — confirmed
+ * from the live site's markup (`font-viga` on each nav item). Loading the real
+ * one matters: it's what makes the recreated header read as BasePaint's rather
+ * than "a blue bar with buttons."
+ */
+const viga = Viga({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-viga",
 });
 
 export const metadata: Metadata = {
@@ -36,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={robotoMono.variable}>
+    <html lang="en" className={`${robotoMono.variable} ${viga.variable}`}>
       <body className="min-h-screen">
         <Providers>{children}</Providers>
       </body>

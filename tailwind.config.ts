@@ -36,6 +36,9 @@ const config: Config = {
           "system-ui",
           "sans-serif",
         ],
+        // The face basepaint.xyz uses on its nav buttons (`font-viga` in the
+        // live markup). Loaded via next/font in app/layout.tsx.
+        viga: ["var(--font-viga)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },
