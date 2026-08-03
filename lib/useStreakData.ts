@@ -55,6 +55,13 @@ export function useStreakData() {
     isConnected,
     today,
     isLoading: accountQuery.isLoading || contributionsQuery.isLoading,
+    /**
+     * True when the indexer couldn't be read. Callers must show this rather
+     * than rendering the simulation's output, which would otherwise report a
+     * confident 0-day streak built on no data at all.
+     */
+    isError: accountQuery.isError || contributionsQuery.isError,
+    error: (contributionsQuery.error ?? accountQuery.error) as Error | null,
     account: accountQuery.data ?? null,
     paintedDays,
     purchases,

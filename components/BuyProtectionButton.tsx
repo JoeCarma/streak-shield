@@ -116,7 +116,21 @@ export function BuyProtectionButton({
       </p>
 
       {!eligibility.allowed && (
-        <p className="mt-1 text-xs text-bp-accent/80">{eligibility.reason}</p>
+        <p className="mt-1 text-xs text-bp-accent/80">
+          {eligibility.reason}
+          {eligibility.nextEligibleAt && (
+            <>
+              {" "}
+              Next purchase available{" "}
+              {new Date(eligibility.nextEligibleAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+              .
+            </>
+          )}
+        </p>
       )}
       {errorMsg && <p className="mt-1 text-xs text-red-300">{errorMsg}</p>}
     </div>

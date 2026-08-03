@@ -11,6 +11,8 @@ export default function HomePage() {
   const {
     isConnected,
     isLoading,
+    isError,
+    error,
     streakState,
     rawStreak,
     purchases,
@@ -34,6 +36,32 @@ export default function HomePage() {
 
   if (isLoading) {
     return <p className="py-16 text-center text-sm text-bp-fg/50">Loading your streak…</p>;
+  }
+
+  /*
+   * Never fall through to the simulation on a failed read — with no
+   * contribution history it returns a 0-day streak, which looks like a real
+   * (and alarming) answer rather than a missing one.
+   */
+  if (isError) {
+    return (
+      <div className="rounded-lg border-2 border-red-400/60 bg-red-950/30 p-6 text-sm">
+        <p className="font-bold text-red-200">Couldn&apos;t reach BasePaint&apos;s indexer.</p>
+        <p className="mt-2 text-red-200/70">
+          Your streak can&apos;t be calculated without your painting history, so nothing is shown
+          rather than a misleading zero.
+        </p>
+        {error?.message && (
+          <p className="mt-2 font-mono text-xs text-red-200/50">{error.message}</p>
+        )}
+        <button
+          onClick={() => refetchAll()}
+          className="mt-4 rounded border-2 border-red-300/50 px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-200 hover:border-red-200 hover:text-red-100"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (

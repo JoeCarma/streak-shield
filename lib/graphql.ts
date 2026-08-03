@@ -40,18 +40,17 @@ const ACCOUNT_QUERY = gql`
   }
 `;
 
-/** Fetch the indexer's own account record (it already tracks a raw, unshielded streak). */
+/**
+ * Fetch the indexer's own account record (it already tracks a raw, unshielded
+ * streak). Throws on request failure — see fetchContributionDays for why a
+ * swallowed error is worse than a visible one here.
+ */
 export async function fetchAccount(address: string): Promise<AccountRecord | null> {
   const id = address.toLowerCase();
-  try {
-    const data = await graphqlClient.request<{ account: AccountRecord | null }>(ACCOUNT_QUERY, {
-      id,
-    });
-    return data.account ?? null;
-  } catch (err) {
-    console.error("fetchAccount failed", err);
-    return null;
-  }
+  const data = await graphqlClient.request<{ account: AccountRecord | null }>(ACCOUNT_QUERY, {
+    id,
+  });
+  return data.account ?? null;
 }
 
 export type ContributionRecord = {
@@ -60,8 +59,44 @@ export type ContributionRecord = {
 };
 
 const CONTRIBUTIONS_QUERY = gql`
-  query Contributions($accountId: String!, $limit: Int!) {
-    contributions(where: { accountId: $accountId }, orderBy: "canvasId", orderDirection: "desc", limit: $limit) {
+  query Contributions($accountId: String!, $limit: Int!, $after: String) {
+    contributions(
+      where: { accountId: $accountId }
+      orderBy: "canvasId"
+      orderDirection: "desc"
+      limit: $limit
+      after: $after
+    ) {
+      items {
+        canvasId
+        pixelsCount
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+/**
+ * Ponder rejects `limit` above 1000, so pages have to be walked rather than
+ * asked for in one shot. An earlier version requested 2000 in a single call,
+ * which failed validation — and because the failure was swallowed and returned
+ * an empty array, the UI confidently rendered a 0-day streak for accounts with
+ * years of history. Errors now propagate so react-query can surface them.
+ */
+const CONTRIBUTIONS_PAGE_SIZE = 1000;
+
+/** Plain-as-possible variant, used if the cursor arguments aren't supported. */
+const CONTRIBUTIONS_FALLBACK_QUERY = gql`
+  query ContributionsFallback($accountId: String!, $limit: Int!) {
+    contributions(
+      where: { accountId: $accountId }
+      orderBy: "canvasId"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
       items {
         canvasId
         pixelsCount
@@ -72,24 +107,52 @@ const CONTRIBUTIONS_QUERY = gql`
 
 /**
  * Every day this account painted (has a Contribution row), most recent first.
- * This is the ground truth Streak Shield walks backward over to simulate
- * shield consumption — the indexer's own `streak` field can't be reused
- * directly because it resets on any missed day, with no concept of shields.
+ * This is the ground truth Streak Shield replays forward to simulate shield
+ * consumption — the indexer's own `streak` field can't be reused directly
+ * because it resets on any missed day, with no concept of shields.
+ *
+ * Throws on failure rather than returning []: an empty result and a failed
+ * request mean very different things here (no history vs. we don't know), and
+ * silently conflating them produces a wrong-but-plausible streak.
  */
-export async function fetchContributionDays(
-  address: string,
-  limit = 2000
-): Promise<ContributionRecord[]> {
+export async function fetchContributionDays(address: string): Promise<ContributionRecord[]> {
   const accountId = address.toLowerCase();
+
   try {
-    const data = await graphqlClient.request<{ contributions: unknown }>(CONTRIBUTIONS_QUERY, {
-      accountId,
-      limit,
-    });
-    return unwrapItems<ContributionRecord>(data.contributions);
+    const all: ContributionRecord[] = [];
+    let after: string | null = null;
+
+    // Bounded so a misbehaving cursor can't spin forever.
+    for (let page = 0; page < 20; page++) {
+      const data: { contributions: unknown } = await graphqlClient.request(CONTRIBUTIONS_QUERY, {
+        accountId,
+        limit: CONTRIBUTIONS_PAGE_SIZE,
+        after,
+      });
+
+      all.push(...unwrapItems<ContributionRecord>(data.contributions));
+
+      const pageInfo = (
+        data.contributions as { pageInfo?: { hasNextPage?: boolean; endCursor?: string } }
+      )?.pageInfo;
+      if (!pageInfo?.hasNextPage || !pageInfo.endCursor) break;
+      after = pageInfo.endCursor;
+    }
+
+    return all;
   } catch (err) {
-    console.error("fetchContributionDays failed", err);
-    return [];
+    /*
+     * The cursor arguments above (`after`, `pageInfo`) are Ponder conventions
+     * that this indexer's schema may not expose. Rather than fail outright,
+     * retry with the plainest possible query — BasePaint is only ~1100 days
+     * old, so a single 1000-row page covers all but the most complete history.
+     */
+    console.warn("Paginated contributions query failed, retrying unpaginated", err);
+    const data = await graphqlClient.request<{ contributions: unknown }>(
+      CONTRIBUTIONS_FALLBACK_QUERY,
+      { accountId, limit: CONTRIBUTIONS_PAGE_SIZE }
+    );
+    return unwrapItems<ContributionRecord>(data.contributions);
   }
 }
 
