@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { createWalletClient, custom, type WalletClient } from "viem";
 import { base } from "viem/chains";
 
@@ -23,8 +24,15 @@ type WalletState = {
  * Minimal EIP-1193 wallet connection — no wagmi. Covers MetaMask, Coinbase
  * Wallet's extension, and any other injected Base-compatible wallet.
  * See lib/wagmi.ts for the rationale (dependency weight).
+ *
+ * Deliberately NOT exported: connection state has to be shared across the tree,
+ * not duplicated per caller. Use `useWallet()` (backed by WalletProvider).
+ * An earlier version exported this directly, so every consumer held its own
+ * copy — clicking "Connect wallet" updated the button but left sibling
+ * components (the profile's Streak Shield card) stuck on their disconnected
+ * state until a route change remounted them.
  */
-export function useWallet() {
+function useWalletState() {
   const [state, setState] = useState<WalletState>({
     address: null,
     isConnected: false,
@@ -131,4 +139,27 @@ export function useWallet() {
   }, [state.address]);
 
   return { ...state, connect, disconnect, getWalletClient };
+}
+
+type WalletContextValue = ReturnType<typeof useWalletState>;
+
+const WalletContext = createContext<WalletContextValue | null>(null);
+
+/**
+ * Holds the single wallet connection for the whole app. Mounted once in
+ * app/providers.tsx so that connecting anywhere updates everywhere — the
+ * header button and the page content are always describing the same wallet.
+ */
+export function WalletProvider({ children }: { children: ReactNode }) {
+  const value = useWalletState();
+  return createElement(WalletContext.Provider, { value }, children);
+}
+
+/** Read the shared wallet connection. Must be used under <WalletProvider>. */
+export function useWallet(): WalletContextValue {
+  const ctx = useContext(WalletContext);
+  if (!ctx) {
+    throw new Error("useWallet must be used within <WalletProvider> (see app/providers.tsx)");
+  }
+  return ctx;
 }
