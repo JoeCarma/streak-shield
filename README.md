@@ -79,9 +79,15 @@ that canvas's real artist earnings pool — there's no separate treasury. The ap
 the mint transaction to confirm and then credits a shield, subject to the cap and rolling-window
 rules enforced in `lib/streak.ts#canPurchaseShield`.
 
-**Leaderboard** (`app/leaderboard/page.tsx`) is a simple public page sorted by BasePaint's raw
-streak — the gap called out in the spec: streaks are already visible informally in BasePaint's
-chat, but there's no public leaderboard today.
+**Leaderboard** (`app/(dashboard)/leaderboard/page.tsx`) is a simple public page sorted by
+BasePaint's raw streak — the gap called out in the spec: streaks are already visible informally in
+BasePaint's chat, but there's no public leaderboard today.
+
+**Reading the indexer.** `Contribution` rows are paged at 1000 (Ponder rejects a larger `limit`),
+with a fallback to an unpaginated query if the cursor arguments aren't exposed. Failures propagate
+instead of returning an empty list: with no history the simulation reports a 0-day streak, which
+reads as a real — and alarming — answer rather than a missing one, so the dashboard shows an error
+state instead.
 
 **Notifications.** No Farcaster bot, no email, no Telegram — those all need their own
 opt-in/infra and a cold-mention bot account risks getting spam-flagged this week. Instead there's
@@ -96,7 +102,9 @@ app/(dashboard)/leaderboard/page.tsx public leaderboard sorted by raw streak
 app/(dashboard)/layout.tsx           Streak Shield's own header/footer shell
 app/profile/page.tsx                 concept: Streak Shield native to a BasePaint profile page
 components/ProfileStreakShieldCard.tsx  the profile-native shield card (real engine, not a mock)
-components/SocialIcons.tsx           inline X / Farcaster marks
+components/SocialIcons.tsx           inline X / Instagram / Farcaster marks
+public/basepaint-logo-white.svg      official BasePaint mark (per basepaint.xyz/brand)
+public/avatar.png, public/brush.png  the demo account's own PFP and brush NFT
 lib/basepaint.ts               day math, BasePaint contract address/ABI, mint-day helper
 lib/graphql.ts                 queries against graphql.basepaint.xyz (Account, Contribution)
 lib/streak.ts                  the forward-replay streak/shield simulation engine
@@ -106,7 +114,19 @@ lib/wagmi.ts                   viem public client for Base mainnet reads
 lib/useWallet.ts               minimal EIP-1193 wallet connection (no wagmi, see above)
 components/BuyProtectionButton.tsx   real on-chain mint + shield credit
 contracts/StreakShield.sol     on-chain stretch goal, documented, not deployed
+LICENSE                        CC0, matching BasePaint's own licensing
 ```
+
+## Matching BasePaint's look
+
+`/profile` isn't styled "in the spirit of" BasePaint — it's matched against the live site. The nav
+uses BasePaint's own button treatment (`#014BE5`, uppercase **Viga** at `text-sm`, `rounded-md`,
+the black shell showing through the gaps rather than per-button borders), the official mark from
+[basepaint.xyz/brand](https://basepaint.xyz/brand) unmodified, and **Roboto Mono** for the
+interface. MEK Sans / MEK Mono are BasePaint's display faces but are commercial and not
+redistributable, so they're named in the font stack and fall back to Roboto Mono.
+
+Fonts load through `next/font`, self-hosted at build time — no runtime CDN request.
 
 ## Why this balance beats a simpler "buy shields" model
 
@@ -140,15 +160,20 @@ active player already has.
 - No push/social notification — only reaches people who open the app.
 - Leaderboard ranks BasePaint's raw streak, not the shielded one, since shield state isn't shared
   infrastructure yet.
-- `/profile` is a concept mockup, not a fork of basepaint.xyz — the profile chrome around the
-  Streak Shield card is static, and the numbers in the stats grid are copied from a real profile
-  rather than fetched. The BasePaint logo is loaded from BasePaint's own brand page; drop it into
-  `public/` to make the repo fully self-contained.
-- With no wallet connected, `/profile` shows clearly-labeled preview numbers so the page reads as
-  complete in screenshots; connect a wallet and it switches to real indexer data.
+- `/profile` is a concept mockup, not a fork of basepaint.xyz. Everything around the Streak Shield
+  card — stats, collection counts, favourite canvases, the activity feed — is **static content
+  transcribed from a real profile**, not fetched. Only the Streak Shield card is live. Canvas
+  thumbnails are real CC0 images pulled from BasePaint's art endpoint.
+- With no wallet connected, `/profile` shows clearly-labelled preview numbers (a 24-day streak,
+  2 shields) so the page reads as complete in screenshots. Connect a wallet and the card switches
+  to real indexer data — including, honestly, a 0-day streak if that's what the history says.
 
-## Credits
+## Credits & licence
 
-BasePaint artwork is CC0. Logo and brand palette per [basepaint.xyz/brand](https://basepaint.xyz/brand);
-MEK Sans / MEK Mono are BasePaint's display faces and are **not** redistributed here — the app
-falls back to Roboto Mono, BasePaint's UI typeface. Unofficial and unaffiliated.
+Released under [CC0](./LICENSE), matching BasePaint's own licensing.
+
+BasePaint artwork is CC0. Logo and brand palette per
+[basepaint.xyz/brand](https://basepaint.xyz/brand), used unmodified. MEK Sans / MEK Mono are
+BasePaint's commercial display faces and are **not** redistributed here.
+
+Unofficial, unaffiliated with and unendorsed by BasePaint.
