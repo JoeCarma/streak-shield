@@ -18,6 +18,8 @@ const DEMO_STATE = {
   shieldsHeld: 2,
   maxShields: 2,
   paintedToday: true,
+  /** Missed days a shield absorbed — the 3-day gap between 24 and 21. */
+  shieldSaves: 3,
 };
 
 /**
@@ -41,6 +43,9 @@ export function ProfileStreakShieldCard() {
     purchases,
     refreshPurchases,
     refetchAll,
+    today,
+    paintedDayCount,
+    recentPaintedDays,
   } = useStreakData();
 
   const showDemo = !isConnected;
@@ -50,7 +55,9 @@ export function ProfileStreakShieldCard() {
   const shieldsHeld = showDemo ? DEMO_STATE.shieldsHeld : streakState.shieldsHeld;
   const maxShields = showDemo ? DEMO_STATE.maxShields : streakState.maxShields;
   const paintedToday = showDemo ? DEMO_STATE.paintedToday : streakState.paintedToday;
+  /** Days of streak preserved — not the same as the number of days a shield absorbed. */
   const saved = streak - raw;
+  const shieldSaves = showDemo ? DEMO_STATE.shieldSaves : streakState.totalShieldSaves;
 
   return (
     <div className="rounded-lg border-2 border-bp-accent/30 bg-bp-card p-6">
@@ -88,11 +95,31 @@ export function ProfileStreakShieldCard() {
           </p>
 
           {saved > 0 && (
+            /*
+              Two different quantities, deliberately kept distinct: how many
+              missed days a shield actually absorbed, and how much streak that
+              preserved. Collapsing them into one "saved N days" reads as a
+              contradiction next to the shield history, which counts the former.
+            */
             <p className="mt-3 border-t border-bp-fg/10 pt-3 text-xs text-bp-fg/60">
               Without Streak Shield this would read{" "}
-              <span className="font-bold text-bp-fg">{raw}</span> — shields have saved{" "}
-              <span className="font-bold text-bp-accent">{saved}</span>{" "}
-              {saved === 1 ? "day" : "days"}.
+              <span className="font-bold text-bp-fg">{raw}</span> — covering{" "}
+              <span className="font-bold text-bp-fg">{shieldSaves}</span> missed{" "}
+              {shieldSaves === 1 ? "day" : "days"} kept{" "}
+              <span className="font-bold text-bp-accent">{saved}</span> days of streak alive.
+            </p>
+          )}
+
+          {/*
+            The inputs behind the headline number, shown next to it rather than
+            on another page: day, how much history loaded, and the most recent
+            painted days. A streak that looks wrong is almost always one of
+            those three being wrong, and this makes that visible immediately.
+          */}
+          {isConnected && (
+            <p className="mt-3 border-t border-bp-fg/10 pt-3 font-mono text-[11px] text-bp-fg/30">
+              day {today} · {paintedDayCount} days of history loaded
+              {recentPaintedDays.length > 0 && <> · recent: {recentPaintedDays.join(", ")}</>}
             </p>
           )}
 

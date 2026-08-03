@@ -19,6 +19,8 @@ export default function HomePage() {
     refreshPurchases,
     refetchAll,
     today,
+    paintedDayCount,
+    recentPaintedDays,
   } = useStreakData();
 
   if (!isConnected) {
@@ -96,7 +98,17 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <p className="text-center text-[11px] text-bp-fg/30">BasePaint day {today}</p>
+      {/*
+        Deliberately visible rather than hidden in a console log: the day number
+        and the raw painted-day list are the two inputs that decide the streak,
+        so when the headline number looks wrong this line says immediately
+        whether the cause is bad data, the wrong day, or a correct-but-broken
+        streak.
+      */}
+      <p className="text-center text-[11px] text-bp-fg/30">
+        BasePaint day {today} · {paintedDayCount} days painted
+        {recentPaintedDays.length > 0 && <> · most recent: {recentPaintedDays.join(", ")}</>}
+      </p>
     </div>
   );
 }

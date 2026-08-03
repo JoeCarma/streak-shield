@@ -1,8 +1,30 @@
 import { GraphQLClient, gql } from "graphql-request";
+import { getAddress } from "viem";
 
 export const BASEPAINT_GRAPHQL_ENDPOINT = "https://graphql.basepaint.xyz";
 
 export const graphqlClient = new GraphQLClient(BASEPAINT_GRAPHQL_ENDPOINT);
+
+/**
+ * BasePaint's indexer keys accounts by their EIP-55 **checksummed** address —
+ * `Account.id` and `Contribution.accountId` both look like
+ * `0xfd82e4b3aDDcF02E00196a7ba23876ac96820881`, not the lowercase form.
+ *
+ * This matters more than it looks. Filtering by a lowercased address doesn't
+ * error, it just silently matches nothing: `account` comes back `null` and
+ * `contributions` comes back `[]`. Downstream, an empty painting history makes
+ * the streak simulation report a confident 0-day streak — indistinguishable
+ * from a genuinely broken streak. Wallets hand back lowercase addresses, so
+ * every lookup has to be re-checksummed here.
+ */
+function toIndexerId(address: string): string {
+  try {
+    return getAddress(address);
+  } catch {
+    // Not a valid address — pass through and let the query return nothing.
+    return address;
+  }
+}
 
 /**
  * The indexer (basepaint-ponder) is built with Ponder, whose generated GraphQL
@@ -46,9 +68,8 @@ const ACCOUNT_QUERY = gql`
  * swallowed error is worse than a visible one here.
  */
 export async function fetchAccount(address: string): Promise<AccountRecord | null> {
-  const id = address.toLowerCase();
   const data = await graphqlClient.request<{ account: AccountRecord | null }>(ACCOUNT_QUERY, {
-    id,
+    id: toIndexerId(address),
   });
   return data.account ?? null;
 }
@@ -116,7 +137,7 @@ const CONTRIBUTIONS_FALLBACK_QUERY = gql`
  * silently conflating them produces a wrong-but-plausible streak.
  */
 export async function fetchContributionDays(address: string): Promise<ContributionRecord[]> {
-  const accountId = address.toLowerCase();
+  const accountId = toIndexerId(address);
 
   try {
     const all: ContributionRecord[] = [];
