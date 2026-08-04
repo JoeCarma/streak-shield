@@ -79,9 +79,11 @@ that canvas's real artist earnings pool — there's no separate treasury. The ap
 the mint transaction to confirm and then credits a shield, subject to the cap and rolling-window
 rules enforced in `lib/streak.ts#canPurchaseShield`.
 
-**Leaderboard** (`app/(dashboard)/leaderboard/page.tsx`) is a simple public page sorted by
-BasePaint's raw streak — the gap called out in the spec: streaks are already visible informally in
-BasePaint's chat, but there's no public leaderboard today.
+**Leaderboard** (`app/(dashboard)/leaderboard/page.tsx`) ranks wallets by BasePaint's raw streak.
+BasePaint already has [its own leaderboard](https://basepaint.xyz/leaderboard) with a streak
+view — this one is not filling a gap, and it isn't the point of the project. It exists so the
+shielded streak can be seen next to the unshielded one at a glance, and it drops BasePaint's
+requirement of a registered ENS / CB.id to appear, so every wallet shows up.
 
 **Reading the indexer.** `Contribution` rows are paged at 1000 (Ponder rejects a larger `limit`),
 with a fallback to an unpaginated query if the cursor arguments aren't exposed. Failures propagate

@@ -21,8 +21,17 @@ export default function LeaderboardPage() {
       <div>
         <h1 className="font-sans text-xl font-bold">Streak leaderboard</h1>
         <p className="mt-1 text-sm text-bp-fg/60">
-          Sorted by BasePaint's own raw streak (consecutive painting days). This is the gap Streak
-          Shield fills — there's no public page for this today, only a number in chat.
+          Sorted by BasePaint's own raw streak — consecutive painting days, no shields applied.
+          BasePaint has{" "}
+          <a
+            href="https://basepaint.xyz/leaderboard"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-bp-accent"
+          >
+            its own leaderboard
+          </a>{" "}
+          too; this one lists every wallet, including those without a registered ENS or CB.id.
         </p>
       </div>
 

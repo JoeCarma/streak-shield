@@ -5,3 +5,6 @@ out
 .env.local
 *.tsbuildinfo
 .DS_Store
+
+# Working notes for the demo video — not part of the project
+DEMO-SCRIPT.md
